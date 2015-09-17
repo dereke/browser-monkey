@@ -25,6 +25,37 @@ describe('browser-monkey', function () {
     }, 200);
   }
 
+  describe('errors', function(){
+    it('has helpful error when can not find element in sub component', function(){
+      var person = browser.find('.person').component({
+        address: function(){
+          return this.find('.address');
+        }
+      });
+
+      eventuallyInsertHtml('<div class="person"></div>');
+
+      var error;
+      return person.address().element()
+        .then(null, function(e){
+          error = e;
+        }).then(function(){
+          expect(error.message).to.contain('.person .address');
+          expect(error.parent).to.equal(document.querySelector('.person'));
+        });
+    });
+    it('includes text in error path', function(){
+      var error;
+      return browser.find('div', {text: 'blah'})
+        .element().then(null, function(e){
+          error = e;
+        }).then(function(){
+          console.log(error)
+          expect(error.message).to.contain('div {"text":"blah"}');
+        });
+    });
+  });
+
   describe('find', function () {
     it('should eventually find an element', function () {
       var promise = browser.find('.element').shouldExist();

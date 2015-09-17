@@ -347,8 +347,20 @@ Selector.prototype.containing = function (selector, options) {
   });
 };
 
+function BrowserMonkeyError(message, parent) {
+  var tmp = Error.apply(this, arguments);
+  tmp.name = this.name = 'BrowserMonkeyError';
+
+  this.message = tmp.message;
+  this.parent = parent;
+
+  Error.captureStackTrace(this, BrowserMonkeyError);
+
+  return this;
+}
+
 Selector.prototype.printFinders = function (finders) {
-  return finders.map(function (f) { return f.toString(); }).join(' / ');
+  return finders.map(function (f) { return f.toString(); }).join(' ');
 };
 
 Selector.prototype.findElements = function (options) {
@@ -362,7 +374,7 @@ Selector.prototype.findElements = function (options) {
       var found = finder.find(el);
 
       if (!found) {
-        throw new Error("expected to find: " + self.printFinders(self.finders.slice(0, finderIndex + 1)));
+        throw new BrowserMonkeyError("expected to find: " + self.printFinders(self.finders.slice(0, finderIndex + 1)), el[0]);
       }
 
       return findWithFinder(found, finderIndex + 1);
@@ -411,7 +423,7 @@ Selector.prototype.notResolve = function(options) {
     } catch (e) {
     }
     if (found) {
-      throw new Error("didn't expect to find element: " + self.printFinders(self.finders));
+      throw new BrowserMonkeyError("didn't expect to find element: " + self.printFinders(self.finders));
     }
   });
 };
@@ -495,7 +507,7 @@ Selector.prototype.click = function(options) {
   var self = this;
 
   return this.enabled().element(options).then(function(element) {
-    debug('click', element);
+    debug('click', element, options);
     self.handleEvent({type: 'click', element: element});
     blurActiveElement();
     return sendclick(element);
@@ -510,7 +522,7 @@ Selector.prototype.select = function(options) {
     optionElement.selected = true;
     var selectElement = optionElement.parentNode;
 
-    debug('select', selectElement);
+    debug('select', selectElement, options);
     self.handleEvent({
       type: 'select option',
       value: optionElement.value,
@@ -530,7 +542,7 @@ Selector.prototype.typeIn = function(text, options) {
   var self = this;
 
   return this.element(options).then(function(element) {
-    debug('typeIn', element, text);
+    debug('typeIn', element, text, options);
     self.handleEvent({type: 'typing', text: text, element: element});
     blurActiveElement();
     return sendkeys(element, text);
@@ -541,7 +553,7 @@ Selector.prototype.typeInHtml = function(html, options) {
   var self = this;
 
   return this.element(options).then(function(element) {
-    debug('typeInHtml', element, html);
+    debug('typeInHtml', element, html, options);
     self.handleEvent({type: 'typing html', html: html, element: element});
     return sendkeys.html(element, html);
   });
