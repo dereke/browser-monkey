@@ -361,6 +361,21 @@ describe('browser-monkey', function () {
         expect(firedEvents).to.eql(['input'])
       });
     });
+
+    it('sends an enter key press', function(){
+      var enterPressed = false;
+      insertHtml('<input type="text" class="element">')
+        .on('keypress', function(e){
+          if (e.keyCode === 13) {
+            enterPressed = true;
+          }
+        });
+
+      return browser.find('.element').typeIn('hello<enter>world').then(function () {
+        expect($(div).find('input.element').val()).to.equal('helloworld');
+        expect(enterPressed).to.be.true;
+      });
+    });
   });
 
   describe('events', function(){
